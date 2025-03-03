@@ -1,0 +1,15 @@
+﻿﻿version: '3.4'
+
+services:
+ nuxtshop:
+    container_name: NuxtShopApi
+    image: nuxt-shop-api:1.0.0
+    ports:
+    - "3020:80"
+    - "44320:443"
+    environment:
+      - "TZ=Asia/Ho_Chi_Minh"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
