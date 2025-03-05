@@ -38,8 +38,8 @@ jobs:
     - name: Deploy to VPS
       run: |
         sshpass -p "${{ secrets.VPS_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-        docker stop nuxtshopapi || true
-        docker rm nuxtshopapi || true
+        docker stop nuxt-shop-api || true
+        docker rm nuxt-shop-api || true
         docker pull ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
-        docker run --name nuxtshopapi -itd -p 8080:8080 ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
+        docker run --name nuxt-shop-api -itd -p 8080:8080 ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
         EOF
