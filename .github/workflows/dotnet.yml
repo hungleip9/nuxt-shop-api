@@ -26,3 +26,20 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Created TAG date for image docker
+      run: echo "TAG=$(date +'%d-%m-%Y')" >> $GITHUB_ENV
+    - name: build image docker
+      run: docker build . -t ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
+    - name: publish
+      run: |
+        echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        docker push ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
+        docker image prune -f
+    - name: Deploy to VPS
+      run: |
+        sshpass -p "${{ secrets.VPS_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+        docker stop nuxtshopapi || true
+        docker rm nuxtshopapi || true
+        docker pull ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
+        docker run --name nuxtshopapi -itd -p 8080:8080 ${{ secrets.DOCKER_NAME_IMAGE }}:${{ env.TAG }}
+        EOF
