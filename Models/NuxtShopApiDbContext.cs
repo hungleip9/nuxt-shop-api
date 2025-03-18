@@ -29,9 +29,11 @@ public partial class NuxtShopApiDbContext : DbContext
     {
         modelBuilder.Entity<TokenLogin>(entity =>
         {
+            entity.HasKey(e => e.UserId);
+
             entity.ToTable("TokenLogin");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("userId");
             entity.Property(e => e.AccessToken).HasColumnName("accessToken");
             entity.Property(e => e.RefreshToken)
                 .HasMaxLength(200)
@@ -42,7 +44,6 @@ public partial class NuxtShopApiDbContext : DbContext
         {
             entity.ToTable("User");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.IdNumber).HasMaxLength(50);

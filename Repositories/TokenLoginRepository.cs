@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure;
+using Microsoft.EntityFrameworkCore;
 using nuxt_shop.Models;
 
 namespace nuxt_shop.Repositories
@@ -10,9 +11,18 @@ namespace nuxt_shop.Repositories
         {
             this.context = _context;
         }
+        public IQueryable<TokenLogin> GetAll()
+        {
+            return context.TokenLogins.AsQueryable<TokenLogin>();
+        }
         public async Task Create(TokenLogin entity)
         {
-            context.Add(entity);
+            await context.AddAsync(entity);
+            await context.SaveChangesAsync();
+        }
+        public async Task Update(TokenLogin entity)
+        {
+            context.Update(entity);
             await context.SaveChangesAsync();
         }
         public async Task<TokenLogin?> FindToken(string RefreshToken)

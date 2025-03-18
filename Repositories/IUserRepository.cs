@@ -5,8 +5,9 @@ namespace nuxt_shop.Repositories
 {
     public interface IUserRepository
     {
+        IQueryable<User> GetAll();
         Task Register(User user);
-        Task<User?> Authenticate(string PhoneNumber, string password);
+        Task Update(User user);
         Task<bool> CheckEmail(string Email);
         Task<bool> CheckPhoneNumber(string PhoneNumber);
         Task<bool> CheckUserName(string UserName);

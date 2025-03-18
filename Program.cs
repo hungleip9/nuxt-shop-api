@@ -11,6 +11,8 @@ using System.Text;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.OpenApi.Models;
+using nuxt_shop.Exceptions;
+using nuxt_shop.Filters;
 
 namespace nuxt_shop
 {
@@ -74,8 +76,6 @@ namespace nuxt_shop
 
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-            // Add services to the container.
             builder.Services.AddControllers().AddJsonOptions(options =>
             options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
             builder.Services.AddEndpointsApiExplorer();
@@ -108,6 +108,7 @@ namespace nuxt_shop
             });
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserLogRepository, UserLogRepository>();
+            builder.Services.AddScoped<ITokenLoginRepository, TokenLoginRepository>();
             builder.Services.AddScoped<TokenService>();
 
             var app = builder.Build();
@@ -118,7 +119,7 @@ namespace nuxt_shop
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseMiddleware<ExceptionMiddleware>();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();

@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using nuxt_shop.Dtos;
+using nuxt_shop.Exceptions;
 using nuxt_shop.Extensions;
 using nuxt_shop.Models;
 using nuxt_shop.Repositories;
@@ -15,6 +17,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+using nuxt_shop.Filters;
 
 namespace nuxt_shop.Controllers
 {
@@ -24,112 +27,108 @@ namespace nuxt_shop.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IUserLogRepository _userLogRepository;
+        private readonly ITokenLoginRepository _tokenLoginRepository;
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
 
-        public AuthController(IConfiguration config, IUserRepository userRepository, IUserLogRepository userLogRepository, TokenService tokenService)
+        public AuthController(IConfiguration config, IUserRepository userRepository, IUserLogRepository userLogRepository, ITokenLoginRepository tokenLoginRepository, TokenService tokenService)
         {
             _userRepository = userRepository;
             _userLogRepository = userLogRepository;
+            _tokenLoginRepository = tokenLoginRepository;
             _tokenService = tokenService;
             _config = config;
         }
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDto request)
+        public async Task<Result> Register(RegisterDto model)
         {
-            if (ModelState.IsValid)
+            if (!Regex.IsMatch(model.PhoneNumber, @"^0\d{9,10}$"))
             {
-                if (request.Password != request.PasswordConfirm)
-                {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "Mật khẩu không trùng nhau!"
-                    });
-                }
-                if (!Regex.IsMatch(request.PhoneNumber, @"^0\d{9,10}$"))
-                {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "Số điện thoại không hợp lệ!"
-                    });
-                }
-                if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "Email không hợp lệ!"
-                    });
-                }
-                //var hasUserName = await _userRepository.CheckExistence(request.UserName, UserName);
-                var hasUserName = await _userRepository.CheckUserName(request.UserName);
-                if (hasUserName)
-                {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "UserName đã tồn tại!"
-                    });
-                }
-                var hasEmail = await _userRepository.CheckEmail(request.Email);
-                if (hasEmail)
-                {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "Email đã tồn tại!"
-                    });
-                }
-                var hasPhone = await _userRepository.CheckEmail(request.PhoneNumber);
-                if (hasPhone)
-                {
-                    return BadRequest(new
-                    {
-                        code = System.Net.HttpStatusCode.BadRequest,
-                        success = false,
-                        message = "Số điện thoại đã tồn tại!"
-                    });
-                }
-                var user = new User();
-                user.UserName = request.UserName;
-                user.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
-                user.Email = request.Email;
-                user.PhoneNumber = request.PhoneNumber;
-                user.IsLocked = false;
-                await _userRepository.Register(user);
-                return Ok(new
-                {
-                    code = System.Net.HttpStatusCode.OK,
-                    success = true
-                });
+                throw new LQException("Số điện thoại không hợp lệ!");
             }
-            else
+            if (!Regex.IsMatch(model.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) {
+                throw new LQException("Email không hợp lệ!");
+            }
+            var hasUserName = await _userRepository.CheckUserName(model.UserName);
+            if (hasUserName)
             {
-                return BadRequest(new
-                {
-                    code = System.Net.HttpStatusCode.BadRequest,
-                    success = false,
-                    message = "Dữ liệu không hợp lệ!",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
+                throw new LQException("UserName đã tồn tại!");
             }
+            var hasEmail = await _userRepository.CheckEmail(model.Email);
+            if (hasEmail)
+            {
+                throw new LQException("Email đã tồn tại!");
+            }
+            var hasPhone = await _userRepository.CheckPhoneNumber(model.PhoneNumber);
+            if (hasPhone)
+            {
+                throw new LQException("Số điện thoại đã tồn tại!");
+            }
+            var user = new User()
+            {
+                UserName = model.UserName,
+                Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber,
+                IsLocked = false,
+            };
+            await _userRepository.Register(user);
+            var accessToken = GenerateAccessToken(user, out var expireTime);
+            var refreshToken = GenerateRefreshToken();
+            var tokenLogin = new TokenLogin()
+            {
+                UserId = user.Id,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+            };
+            await _tokenLoginRepository.Create(tokenLogin);
+            return new Result()
+            {
+                data = new
+                {
+                    info = user,
+                    token = accessToken,
+                    refresh = refreshToken,
+                    expires = expireTime
+                }
+            };
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto request)
+        public async Task<Result> Login(LoginDto model)
         {
-            var user = await _userRepository.Authenticate(request.PhoneNumber, request.Password);
-            if (user == null) return Unauthorized("Invalid credentials");
+            var user = await _userRepository.GetAll().Where(e => e.PhoneNumber == model.PhoneNumber).FirstOrDefaultAsync();
+            if (user == null || string.IsNullOrEmpty(model.Password) || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+            {
+                throw new LQException("Thông tin đăng nhập không chính xác");
+            }
             var accessToken = GenerateAccessToken(user, out var expireTime);
             var refreshToken = GenerateRefreshToken();
+            var updatePassword = string.IsNullOrEmpty(user.Password);
+
+            var tokenLogin = await _tokenLoginRepository.GetAll()
+                .Where(i => i.UserId == user.Id).FirstOrDefaultAsync();
+            if (tokenLogin == null)
+            {
+                tokenLogin = new TokenLogin()
+                {
+                    UserId = user.Id,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+
+                };
+                await _tokenLoginRepository.Create(tokenLogin);
+            }
+            else
+            {
+                tokenLogin.AccessToken = accessToken;
+                tokenLogin.RefreshToken = refreshToken;
+                await _tokenLoginRepository.Update(tokenLogin);
+            }
+
             var userInfo = await GetUserInfo(user.Id);
-            return Ok( new{
+            return new Result()
+            {
                 code = HttpStatusCode.OK,
                 messages = "Xác thực thành công",
                 success = true,
@@ -138,42 +137,85 @@ namespace nuxt_shop.Controllers
                     info = userInfo,
                     token = accessToken,
                     refresh = refreshToken,
+                    expires = expireTime,
+                    updatepassword = updatePassword
                 }
-            });
+            };
+        }
+        [HttpPost("forgot")]
+        public async Task<Result> Forgot(ForgotDto model)
+        {
+            var user = await _userRepository.GetAll().Where(e => e.PhoneNumber == model.PhoneNumber).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new LQException("Thông tin đăng nhập không chính xác");
+            }
+            user.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
+            await _userRepository.Update(user);
+            return new Result()
+            {
+                code = HttpStatusCode.OK,
+                messages = "Thay đổi mật khẩu thành công!",
+                success = true
+            };
         }
         [HttpGet("info")]
         [Authorize]
-        public async Task<IActionResult> Info()
+        [UserFilter()]
+        public async Task<Result> Info()
         {
             var userInfo = await GetUserInfo(User.GetCustomerId());
-            return Ok(new
+            return new Result()
             {
                 code = HttpStatusCode.OK,
                 messages = "Lấy thông tin user thành công!",
                 success = true,
-                data = userInfo
-            });
+                data = new
+                {
+                    info = userInfo
+                }
+            };
         }
-        [HttpGet("logout")]
-        [HttpGet("logout/{refreshToken}")]
-        public async Task<IActionResult> Logout(string refreshToken)
+        [HttpPost("change-password")]
+        [Authorize]
+        [UserFilter()]
+        public async Task<Result> ChangePassword(ChangePasswordDto model)
         {
-            if (User.Identity?.IsAuthenticated != true) return Ok(new
+            var user = await _userRepository.GetAll().Where(e => e.PhoneNumber == model.PhoneNumber).FirstOrDefaultAsync();
+            if (user == null || !BCrypt.Net.BCrypt.Verify(model.OldPassword, user.Password))
             {
-                messages = "Đăng xuất thành công",
-                success = true
-            });
-
-            if (!string.IsNullOrEmpty(refreshToken))
-            {
-                await _userLogRepository.AddUserLog(User.GetCustomerId(), "Đăng xuất", "",
-                    DateTime.Now, HttpContext.Request.GetIpAddress());
+                throw new LQException("Thông tin đăng nhập không chính xác");
             }
-            return Ok(new
+            user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+            return new Result()
             {
+                code = HttpStatusCode.OK,
+                messages = "Thay đổi mật khẩu thành công!",
+                success = true
+            };
+        }
+        [HttpGet("logout/{refreshToken}")]
+        public async Task<Result> Logout(string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new LQException("Chưa có refreshToken!");
+            }
+            var tokenLogin = await _tokenLoginRepository.GetAll().Where(e => e.RefreshToken == refreshToken).FirstOrDefaultAsync();
+            
+            if (tokenLogin == null)
+            {
+                throw new LQException("refreshToken không tồn tại!");
+            }
+            await _tokenLoginRepository.Delete(tokenLogin);
+            await _userLogRepository.AddUserLog(User.GetCustomerId(), $"Đăng xuất {tokenLogin}", "",
+                    DateTime.Now, HttpContext.Request.GetIpAddress());
+            return new Result()
+            {
+                code = HttpStatusCode.OK,
                 messages = "Đăng xuất thành công",
                 success = true
-            });
+            };
         }
         private async Task<UserInfo?> GetUserInfo(int Id)
         {
