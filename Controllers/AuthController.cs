@@ -217,6 +217,16 @@ namespace nuxt_shop.Controllers
                 success = true
             };
         }
+        [HttpGet("logout2")]
+        public async Task<Result> Logout2()
+        {
+            return new Result()
+            {
+                code = HttpStatusCode.OK,
+                messages = "Đăng xuất thành công",
+                success = true
+            };
+        }
         private async Task<UserInfo?> GetUserInfo(int Id)
         {
             var userInfo = new UserInfo();
