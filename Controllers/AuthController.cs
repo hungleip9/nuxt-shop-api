@@ -217,8 +217,8 @@ namespace nuxt_shop.Controllers
                 success = true
             };
         }
-        [HttpGet("logout2")]
-        public async Task<Result> Logout2()
+        [HttpGet("logout1")]
+        public async Task<Result> Logout1()
         {
             return new Result()
             {
