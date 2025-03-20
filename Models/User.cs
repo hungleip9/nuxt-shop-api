@@ -5,6 +5,8 @@ namespace nuxt_shop.Models;
 
 public partial class User
 {
+    public int Id { get; set; }
+
     public string UserName { get; set; } = null!;
 
     public string? FullName { get; set; }
@@ -16,8 +18,6 @@ public partial class User
     public string PhoneNumber { get; set; } = null!;
 
     public string? Address { get; set; }
-
-    public int Id { get; set; }
 
     public string? Status { get; set; }
 
