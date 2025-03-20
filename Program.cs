@@ -75,7 +75,11 @@ namespace nuxt_shop
             builder.Services.AddAuthorization();
 
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(NuxtShopApiDbContext).Assembly.FullName));
+            });
             builder.Services.AddControllers().AddJsonOptions(options =>
             options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
             builder.Services.AddEndpointsApiExplorer();
