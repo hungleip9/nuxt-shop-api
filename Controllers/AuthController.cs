@@ -194,6 +194,42 @@ namespace nuxt_shop.Controllers
                 success = true
             };
         }
+        [HttpGet("refresh/{refresh}")]
+        public async Task<Result> refresh(string refresh)
+        {
+            if (string.IsNullOrEmpty(refresh))
+            {
+                throw new LQException("Chưa có refreshToken!");
+            }
+            var tokenLogin = await _tokenLoginRepository.GetAll().Where(e => e.RefreshToken == refresh).FirstOrDefaultAsync();
+
+            if (tokenLogin == null)
+            {
+                throw new LQException("RefreshToken không tồn tại!");
+            }
+            var user = await _userRepository.GetAll().Where(e => e.Id == tokenLogin.UserId).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new LQException("User không tồn tại!");
+            }
+            var accessToken = GenerateAccessToken(user, out var expireTime);
+            var refreshToken = GenerateRefreshToken();
+            tokenLogin.AccessToken = accessToken;
+            tokenLogin.RefreshToken = refreshToken;
+            await _tokenLoginRepository.Update(tokenLogin);
+            return new Result()
+            {
+                code = HttpStatusCode.OK,
+                messages = "Lấy token mới thành công!",
+                success = true,
+                data = new
+                {
+                    token = accessToken,
+                    refresh = refreshToken,
+                    expires = expireTime
+                }
+            };
+        }
         [HttpGet("logout/{refreshToken}")]
         public async Task<Result> Logout(string refreshToken)
         {
@@ -210,16 +246,6 @@ namespace nuxt_shop.Controllers
             await _tokenLoginRepository.Delete(tokenLogin);
             await _userLogRepository.AddUserLog(User.GetCustomerId(), $"Đăng xuất {tokenLogin}", "",
                     DateTime.Now, HttpContext.Request.GetIpAddress());
-            return new Result()
-            {
-                code = HttpStatusCode.OK,
-                messages = "Đăng xuất thành công",
-                success = true
-            };
-        }
-        [HttpGet("logout3")]
-        public async Task<Result> Logout3()
-        {
             return new Result()
             {
                 code = HttpStatusCode.OK,
