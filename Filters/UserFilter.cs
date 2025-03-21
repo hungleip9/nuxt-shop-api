@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using nuxt_shop.Extensions;
 using nuxt_shop.Exceptions;
 using nuxt_shop.Repositories;
+using System.Security;
 
 namespace nuxt_shop.Filters
 {
@@ -38,7 +39,38 @@ namespace nuxt_shop.Filters
             {
                 throw new LQUnAuthorizeException("Bạn cần đăng nhập để truy cập tính năng này");
             }
+            switch (await CheckPermission(context))
+            {
+                case PermissionResult.Pass:
+                    await next();
+                    break;
+                case PermissionResult.AccountExpired:
+                    throw new LQForbiddenException("Tài khoản đã hết hạn!");
+                case PermissionResult.NoPermission:
+                    throw new LQForbiddenException("Tài khoản không có quyền truy cập");
+                case PermissionResult.AccessLimit:
+                    throw new LQForbiddenException("Bạn đã vượt quá số lần truy cập của chức năng này!");
+                case PermissionResult.InternalServerError:
+                default:
+                    throw new Exception("Có lỗi xảy ra");
+            }
             await next();
+        }
+        private async Task<PermissionResult> CheckPermission(ActionContext context)
+        {
+            var _customer = context.HttpContext.RequestServices.GetService<IUserRepository>() ?? throw new Exception("Có lỗi xảy ra");
+            var customerId = context.HttpContext.User.GetCustomerId();
+            var expDate = context.HttpContext.User.GetCustomerExpireDate();
+            if (expDate.Date < DateTime.Now.Date) return PermissionResult.AccountExpired;
+            return PermissionResult.Pass;
+        }
+        public enum PermissionResult
+        {
+            Pass,
+            AccountExpired,
+            NoPermission,
+            AccessLimit,
+            InternalServerError
         }
     }
 

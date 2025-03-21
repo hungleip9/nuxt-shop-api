@@ -32,6 +32,12 @@ namespace nuxt_shop
                               .AllowAnyHeader();  // Cho phép tất cả headers
                     });
             });
+            builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
+            {
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(NuxtShopApiDbContext).Assembly.FullName));
+            });
             var secret = builder.Configuration.GetValue<string>("AppSettings:SecretKey");
             var key = Encoding.ASCII.GetBytes(secret);
             builder.Services.AddAuthentication(options =>
@@ -73,13 +79,7 @@ namespace nuxt_shop
                 };
             });
             builder.Services.AddAuthorization();
-
-            builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
-            {
-                options.UseSqlServer(
-                    builder.Configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(NuxtShopApiDbContext).Assembly.FullName));
-            });
+            
             builder.Services.AddControllers().AddJsonOptions(options =>
             options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
             builder.Services.AddEndpointsApiExplorer();

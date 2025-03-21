@@ -36,6 +36,7 @@ namespace nuxt_shop.Exceptions
             {
                 LQUnAuthorizeException => 401,
                 LQException => 410,
+                LQForbiddenException => (int)HttpStatusCode.Forbidden,
                 _ => (int)HttpStatusCode.InternalServerError
             };
             context.Response.ContentType = "application/json; charset=utf-8";
