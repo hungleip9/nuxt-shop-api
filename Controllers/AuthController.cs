@@ -71,6 +71,7 @@ namespace nuxt_shop.Controllers
                 Email = model.Email,
                 PhoneNumber = model.PhoneNumber,
                 IsLocked = false,
+                ExpirationDate = new DateTime(2999, 12, 31),
             };
             await _userRepository.Register(user);
             var accessToken = GenerateAccessToken(user, out var expireTime);
@@ -277,19 +278,19 @@ namespace nuxt_shop.Controllers
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetValue<string>("AppSettings:SecretKey")));
             var expTime = _config.GetValue<int>("AppSettings:ExpiredTime");
             var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+            expireTime = DateTime.Now.AddMinutes(expTime);
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Name, user.FullName ?? ""),
+                new(ClaimTypes.Expiration, user.ExpirationDate.ToString(CultureInfo.InvariantCulture))
             };
-            expireTime = DateTime.Now.AddMinutes(expTime);
             var tokeOptions = new JwtSecurityToken(
                 claims: claims,
                 expires: expireTime,
                 signingCredentials: signinCredentials
             );
             var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
-            expireTime = DateTime.Now.AddMinutes(expTime);
             return tokenString;
         }
         private string GenerateRefreshToken()

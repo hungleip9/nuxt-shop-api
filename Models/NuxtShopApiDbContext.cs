@@ -43,6 +43,7 @@ public partial class NuxtShopApiDbContext : DbContext
             entity.ToTable("User");
 
             entity.Property(e => e.Address).HasMaxLength(500);
+            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.IdNumber).HasMaxLength(50);
             entity.Property(e => e.Otp).HasMaxLength(50);

@@ -32,4 +32,6 @@ public partial class User
     public string? Otp { get; set; }
 
     public DateTime? OtpExpired { get; set; }
+
+    public DateTime ExpirationDate { get; set; }
 }
