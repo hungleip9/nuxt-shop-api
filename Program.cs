@@ -28,9 +28,9 @@ namespace nuxt_shop
                 options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
                 {
                     builder.WithOrigins("https://nuxtshop.xyz")
-                    .AllowAnyOrigin()
                     .AllowAnyMethod()
-                    .AllowAnyHeader();
+                    .AllowAnyHeader()
+                    .AllowCredentials();
                 });
             });
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
