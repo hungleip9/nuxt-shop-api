@@ -22,15 +22,15 @@ namespace nuxt_shop
         {
             var builder = WebApplication.CreateBuilder(args);
             // Cấu hình CORS
-            /*builder.Services.AddCors(options =>
+            builder.Services.AddCors(options =>
             {
-                options.AddPolicy(name: "AllowAll", builder =>
+                options.AddPolicy(name: "_myAllowSpecificOrigins", builder =>
                 {
                     builder.AllowAnyOrigin()
                             .AllowAnyMethod()
                             .AllowAnyHeader();
                 });
-            });*/
+            });
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
             {
                 options.UseSqlServer(
@@ -124,7 +124,7 @@ namespace nuxt_shop
             }
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseHttpsRedirection();
-            // app.UseCors("AllowAll");  // 📌 Thêm middleware CORS
+            app.UseCors("_myAllowSpecificOrigins");  // 📌 Thêm middleware CORS
             app.UseAuthentication();
             app.UseAuthorization();
 
