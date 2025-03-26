@@ -24,7 +24,7 @@ namespace nuxt_shop
             // Cấu hình CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAllOrigins",
+                options.AddPolicy("AllowAll",
                     policy =>
                     {
                         policy.AllowAnyOrigin()   // Cho phép tất cả nguồn
