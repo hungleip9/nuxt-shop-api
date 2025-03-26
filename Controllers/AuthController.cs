@@ -254,6 +254,29 @@ namespace nuxt_shop.Controllers
                 success = true
             };
         }
+        [HttpGet("logout2/{refreshToken}")]
+        public async Task<Result> Logout2(string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new LQException("Chưa có refreshToken!");
+            }
+            var tokenLogin = await _tokenLoginRepository.GetAll().Where(e => e.RefreshToken == refreshToken).FirstOrDefaultAsync();
+
+            if (tokenLogin == null)
+            {
+                throw new LQException("refreshToken không tồn tại!");
+            }
+            await _tokenLoginRepository.Delete(tokenLogin);
+            await _userLogRepository.AddUserLog(User.GetCustomerId(), $"Đăng xuất {tokenLogin}", "",
+                    DateTime.Now, HttpContext.Request.GetIpAddress());
+            return new Result()
+            {
+                code = HttpStatusCode.OK,
+                messages = "Đăng xuất thành công",
+                success = true
+            };
+        }
         private async Task<UserInfo?> GetUserInfo(int Id)
         {
             var userInfo = new UserInfo();
