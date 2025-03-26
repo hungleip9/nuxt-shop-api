@@ -114,7 +114,7 @@ namespace nuxt_shop
             builder.Services.AddScoped<TokenService>();
 
             var app = builder.Build();
-            app.UseCors("AllowAllOrigins");  // 📌 Thêm middleware CORS
+            
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -123,8 +123,10 @@ namespace nuxt_shop
             }
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseHttpsRedirection();
+            app.UseCors("_myAllowSpecificOrigins");  // 📌 Thêm middleware CORS
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
             app.Run();
         }
