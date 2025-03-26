@@ -24,11 +24,13 @@ namespace nuxt_shop
             // Cấu hình CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy(name: "_myAllowSpecificOrigins",
-                                  b =>
-                                  {
-                                      b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                                  });
+                options.AddPolicy(name: "_myAllowSpecificOrigins",builder =>
+                {
+                    builder.WithOrigins("https://nuxtshop.xyz")
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                });
             });
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
             {
