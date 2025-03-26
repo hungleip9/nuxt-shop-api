@@ -20,16 +20,14 @@ namespace nuxt_shop
     {
         public static void Main(string[] args)
         {
+            var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
             var builder = WebApplication.CreateBuilder(args);
             // Cấu hình CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy(name: "_myAllowSpecificOrigins",builder =>
+                options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
                 {
-                    builder.WithOrigins("https://nuxtshop.xyz")
-                            .AllowAnyOrigin()
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
+                    builder.WithOrigins("https://nuxtshop.xyz");
                 });
             });
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
@@ -125,7 +123,7 @@ namespace nuxt_shop
             }
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseHttpsRedirection();
-            app.UseCors("_myAllowSpecificOrigins");  // 📌 Thêm middleware CORS
+            app.UseCors(MyAllowSpecificOrigins);  // 📌 Thêm middleware CORS
             app.UseAuthentication();
             app.UseAuthorization();
 
