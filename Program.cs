@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Microsoft.OpenApi.Models;
 using nuxt_shop.Exceptions;
 using nuxt_shop.Filters;
+using Microsoft.Extensions.Options;
 
 namespace nuxt_shop
 {
@@ -21,6 +22,15 @@ namespace nuxt_shop
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(443, listenOptions =>
+                {
+                    listenOptions.UseHttps("/https/aspnetapp.pfx", "hungle");
+                });
+            });
+
             // Cấu hình CORS
             builder.Services.AddCors(options =>
             {

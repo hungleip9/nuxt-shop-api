@@ -7,6 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["nuxt-shop.csproj", "."]
+COPY https/aspnetapp.pfx /https/aspnetapp.pfx
 RUN dotnet restore "./nuxt-shop.csproj"
 COPY . .
 WORKDIR "/src/."
