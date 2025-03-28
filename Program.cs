@@ -32,14 +32,6 @@ namespace nuxt_shop
                 });
             });
 
-            builder.WebHost.UseKestrel(options =>
-            {
-                options.ListenAnyIP(443, listenOptions =>
-                {
-                    listenOptions.UseHttps("certificate.pfx", "hungle"); // Nếu dùng chứng chỉ tự ký
-                });
-            });
-
             builder.Services.AddDbContext<NuxtShopApiDbContext>(options =>
             {
                 options.UseSqlServer(
