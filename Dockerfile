@@ -1,11 +1,14 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
+ENV TZ=Asia/Ho_Chi_Minh
+RUN sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf
 EXPOSE 80
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["nuget.config", "."]
 COPY ["nuxt-shop.csproj", "."]
 RUN dotnet restore "./nuxt-shop.csproj"
 COPY . .
