@@ -9,25 +9,15 @@
     }
   },
   "profiles": {
-    "http": {
+    "nuxt-shop": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
       "launchUrl": "swagger",
-      "applicationUrl": "http://localhost:5032",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "https": {
-      "commandName": "Project",
+      },
       "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:443;http://localhost:5032",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      "applicationUrl": "https://localhost:7044;http://localhost:5044"
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -38,4 +28,3 @@
       }
     }
   }
-}
