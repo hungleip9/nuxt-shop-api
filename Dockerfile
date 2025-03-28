@@ -8,7 +8,6 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["nuget.config", "."]
 COPY ["nuxt-shop.csproj", "."]
 RUN dotnet restore "./nuxt-shop.csproj"
 COPY . .
