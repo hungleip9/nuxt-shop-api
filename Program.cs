@@ -133,7 +133,7 @@ namespace nuxt_shop
             app.UseSwaggerUI();
             
             app.UseMiddleware<ExceptionMiddleware>();
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
             app.UseCors("_myAllowSpecificOrigins");  // 📌 Thêm middleware CORS
             app.UseAuthentication();
             app.UseAuthorization();
