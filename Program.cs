@@ -22,7 +22,7 @@ namespace nuxt_shop
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.WebHost.ConfigureKestrel(options =>
+            /*builder.WebHost.ConfigureKestrel(options =>
             {
                 options.ListenAnyIP(443, listenOptions =>
                 {
@@ -31,7 +31,7 @@ namespace nuxt_shop
                         "/etc/letsencrypt/live/api.nuxtshop.xyz/privkey.pem"
                     );
                 });
-            });
+            });*/
 
             // Cấu hình CORS
             builder.Services.AddCors(options =>
@@ -128,15 +128,21 @@ namespace nuxt_shop
             builder.Services.AddScoped<TokenService>();
 
             var app = builder.Build();
-            
-            app.UseSwagger();
-            app.UseSwaggerUI();
-            
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                       Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+            });
+
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseHttpsRedirection();
             app.UseCors("_myAllowSpecificOrigins");  // 📌 Thêm middleware CORS
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.MapControllers();
             app.Run();
