@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 ENV TZ=Asia/Ho_Chi_Minh
 RUN sed -i 's/TLSv1.2/TLSv1/g' /etc/ssl/openssl.cnf
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 80
+EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
