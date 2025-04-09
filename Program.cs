@@ -97,7 +97,7 @@ namespace nuxt_shop
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(swagger =>
             {
-                swagger.SwaggerDoc("v1", new OpenApiInfo { Title = "StockPro.Api.Auth", Version = "v1" });
+                swagger.SwaggerDoc("v1", new OpenApiInfo { Title = "NuxtShop", Version = "v1" });
                 swagger.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                 {
                     Name = "Authorization",
